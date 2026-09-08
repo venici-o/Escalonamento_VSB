@@ -1,0 +1,9 @@
+# Compilação e saídas do simulador
+/scheduler
+*.o
+*.out
+
+# Evidências e entrega
+*.log
+*.tar
+*.pdf
