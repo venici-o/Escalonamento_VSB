@@ -56,3 +56,63 @@ int ler(FILE *entrada, Tarefa **tarefas, size_t *quantidade, long long *total) {
     free(linha);
     return ok;
 }
+
+static void trecho(FILE *saida, Tarefa *tarefas, int atual, long long unidades, char motivo) {
+    if (!unidades) return;
+    if (atual < 0) fprintf(saida, "idle for %lld units\n", unidades);
+    else fprintf(saida, "[%s] for %lld units - %c\n", tarefas[atual].nome, unidades, motivo);
+}
+
+void simular(FILE *saida, Tarefa *tarefas, size_t n, long long total) {
+    int atual = -1;
+    long long unidades = 0;
+    fprintf(saida, "EXECUTION BY RATE\n\n");
+    for (long long tempo = 0; tempo <= total; tempo++) {
+        /* Conclusões precedem deadlines; não há chegadas no fim da simulação. */
+        if (atual >= 0 && !tarefas[atual].restante) {
+            tarefas[atual].completas++;
+            trecho(saida, tarefas, atual, unidades, 'F');
+            atual = -1; unidades = 0;
+        }
+        for (size_t i = 0; i < n; i++) {
+            if (tarefas[i].restante && tarefas[i].prazo == (unsigned long long)tempo) {
+                tarefas[i].perdidas++;
+                tarefas[i].restante = 0;
+                if ((int)i == atual) {
+                    trecho(saida, tarefas, atual, unidades, 'L');
+                    atual = -1; unidades = 0;
+                }
+            }
+        }
+        if (tempo == total) {
+            trecho(saida, tarefas, atual, unidades, 'K');
+            for (size_t i = 0; i < n; i++)
+                if (tarefas[i].restante) tarefas[i].mortas++;
+            break;
+        }
+        int proxima = -1;
+        for (size_t i = 0; i < n; i++) {
+            if (tempo % tarefas[i].periodo == 0) {
+                tarefas[i].restante = tarefas[i].burst;
+                /* A soma de dois long long positivos cabe no tipo sem sinal. */
+                tarefas[i].prazo = (unsigned long long)tempo + tarefas[i].deadline;
+            }
+            if (!tarefas[i].restante) continue;
+            if (proxima < 0 || tarefas[i].periodo < tarefas[proxima].periodo)
+                proxima = (int)i;
+        }
+        if (proxima != atual) {
+            trecho(saida, tarefas, atual, unidades, 'H');
+            atual = proxima; unidades = 0;
+        }
+        if (atual >= 0) tarefas[atual].restante--;
+        unidades++;
+    }
+    const char *titulos[] = {"LOST DEADLINES", "COMPLETE EXECUTION", "KILLED"};
+    for (int secao = 0; secao < 3; secao++) {
+        fprintf(saida, "\n%s\n", titulos[secao]);
+        for (size_t i = 0; i < n; i++)
+            fprintf(saida, "[%s] %lld\n", tarefas[i].nome,
+                    secao == 0 ? tarefas[i].perdidas : secao == 1 ? tarefas[i].completas : tarefas[i].mortas);
+    }
+}
