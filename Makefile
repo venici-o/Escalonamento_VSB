@@ -6,4 +6,4 @@ scheduler: main.c scheduler.c header.h
 
 .PHONY: clean
 clean:
-	rm -f scheduler *.o rate_vsb.out
+	rm -f scheduler *.o rate_vsb.out edf_vsb.out

@@ -63,10 +63,10 @@ static void trecho(FILE *saida, Tarefa *tarefas, int atual, long long unidades, 
     else fprintf(saida, "[%s] for %lld units - %c\n", tarefas[atual].nome, unidades, motivo);
 }
 
-void simular(FILE *saida, Tarefa *tarefas, size_t n, long long total) {
+void simular(FILE *saida, Tarefa *tarefas, size_t n, long long total, int edf) {
     int atual = -1;
     long long unidades = 0;
-    fprintf(saida, "EXECUTION BY RATE\n\n");
+    fprintf(saida, "EXECUTION BY %s\n\n", edf ? "EDF" : "RATE");
     for (long long tempo = 0; tempo <= total; tempo++) {
         /* Conclusões precedem deadlines; não há chegadas no fim da simulação. */
         if (atual >= 0 && !tarefas[atual].restante) {
@@ -98,7 +98,8 @@ void simular(FILE *saida, Tarefa *tarefas, size_t n, long long total) {
                 tarefas[i].prazo = (unsigned long long)tempo + tarefas[i].deadline;
             }
             if (!tarefas[i].restante) continue;
-            if (proxima < 0 || tarefas[i].periodo < tarefas[proxima].periodo)
+            unsigned long long prioridade = edf ? tarefas[i].prazo : (unsigned long long)tarefas[i].periodo;
+            if (proxima < 0 || prioridade < (edf ? tarefas[proxima].prazo : (unsigned long long)tarefas[proxima].periodo))
                 proxima = (int)i;
         }
         if (proxima != atual) {

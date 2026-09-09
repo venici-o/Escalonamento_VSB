@@ -3,8 +3,8 @@
 #include <string.h>
 
 int main(int argc, char *argv[]) {
-    if (argc != 3 || strcmp(argv[1], "rate")) {
-        fprintf(stderr, "Erro: uso: ./scheduler rate <arquivo>\n");
+    if (argc != 3 || (strcmp(argv[1], "rate") && strcmp(argv[1], "edf"))) {
+        fprintf(stderr, "Erro: uso: ./scheduler <rate|edf> <arquivo>\n");
         return 1;
     }
     FILE *entrada = fopen(argv[2], "r");
@@ -15,11 +15,11 @@ int main(int argc, char *argv[]) {
     int ok = ler(entrada, &tarefas, &n, &total);
     fclose(entrada);
     if (ok) {
-        const char *nome = "rate_vsb.out";
+        const char *nome = !strcmp(argv[1], "edf") ? "edf_vsb.out" : "rate_vsb.out";
         FILE *saida = fopen(nome, "w");
         if (!saida) { perror("Erro ao criar saída"); ok = 0; }
         else {
-            simular(saida, tarefas, n, total);
+            simular(saida, tarefas, n, total, !strcmp(argv[1], "edf"));
             int falhou = ferror(saida);
             if (fclose(saida)) falhou = 1;
             if (falhou) {

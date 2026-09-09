@@ -11,6 +11,6 @@ typedef struct {
 } Tarefa;
 
 int ler(FILE *entrada, Tarefa **tarefas, size_t *quantidade, long long *total);
-void simular(FILE *saida, Tarefa *tarefas, size_t n, long long total);
+void simular(FILE *saida, Tarefa *tarefas, size_t n, long long total, int edf);
 
 #endif
